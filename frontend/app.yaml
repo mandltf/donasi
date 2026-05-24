@@ -1,4 +1,15 @@
 runtime: nodejs22
 env: standard
 service: frontend
-handlers: []
+
+handlers:
+  - url: /assets
+    static_dir: dist/assets
+
+  - url: /(.*\.(json|ico|js|css|png|jpg|svg|txt))
+    static_files: dist/\1
+    upload: dist/.*\.(json|ico|js|css|png|jpg|svg|txt)
+
+  - url: /.*
+    static_files: dist/index.html
+    upload: dist/index.html
