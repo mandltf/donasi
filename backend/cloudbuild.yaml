@@ -56,8 +56,7 @@ steps:
           --region ${_REGION} \
           --platform managed \
           --allow-unauthenticated \
-          --set-env-vars "NODE_ENV=production,GCP_PROJECT_ID=${PROJECT_ID},GCS_BUCKET_NAME=${_GCS_BUCKET_NAME}"
-          --set-env-vars "NODE_ENV=production,GCP_PROJECT_ID=${PROJECT_ID},GCS_BUCKET_NAME=${_GCS_BUCKET_NAME},DATABASE_URL=$$DATABASE_URL"
+          --set-env-vars "NODE_ENV=production,GCP_PROJECT_ID=${PROJECT_ID},GCS_BUCKET_NAME=${_GCS_BUCKET_NAME},DATABASE_URL=$$DATABASE_URL,CORS_ORIGIN=*"
 
 images:
   - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/${_BACKEND_SERVICE}:$SHORT_SHA
