@@ -8,6 +8,8 @@ steps:
     args:
       - -c
       - |
+        echo "PROJECT_ID=$PROJECT_ID"
+        gcloud config list
         cat <<EOF > .env.production
         VITE_API_BASE_URL=${_VITE_API_BASE_URL}
         VITE_FIREBASE_API_KEY=${_VITE_FIREBASE_API_KEY}
