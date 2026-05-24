@@ -1,9 +1,11 @@
 steps:
   - name: 'gcr.io/cloud-builders/npm'
     args: ['ci', '--no-audit', '--fund=false']
+    dir: 'frontend'
 
   - name: 'gcr.io/cloud-builders/npm'
     args: ['run', 'build']
+    dir: 'frontend'
 
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
     entrypoint: 'bash'
@@ -12,6 +14,7 @@ steps:
       - |
         set -euo pipefail
         gcloud app deploy app.yaml --project=${PROJECT_ID} --quiet
+    dir: 'frontend'
 
 options:
   logging: CLOUD_LOGGING_ONLY
