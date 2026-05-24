@@ -19,16 +19,34 @@ const laporanRoutes = require('./routes/laporanRoutes');
 const app = express();
 
 app.use(helmet());
-app.use(cors({ origin: env.corsOrigin === '*' ? true : env.corsOrigin, credentials: true }));
 app.use(compression());
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan(env.nodeEnv === 'production' ? 'combined' : 'dev'));
 
+/**
+ * CORS FIX (IMPORTANT)
+ * - jangan pakai "*"
+ * - harus spesifik domain FE
+ */
+const corsOptions = {
+  origin: env.corsOrigin,
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+};
+
+app.use(cors(corsOptions));
+
+/**
+ * HEALTH CHECK
+ */
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', service: 'donasi-panti-api' });
 });
 
+/**
+ * ROUTES
+ */
 app.use('/auth', authRoutes);
 app.use('/admin', adminRoutes);
 app.use('/panti', pantiRoutes);
@@ -39,6 +57,9 @@ app.use('/penyaluran', penyaluranRoutes);
 app.use('/cerita', ceritaRoutes);
 app.use('/laporan', laporanRoutes);
 
+/**
+ * ERROR HANDLER
+ */
 app.use(notFound);
 app.use(errorHandler);
 
