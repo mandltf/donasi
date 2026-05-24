@@ -1,6 +1,5 @@
 runtime: nodejs22
 env: standard
-service: frontend
 
 handlers:
   - url: /assets
