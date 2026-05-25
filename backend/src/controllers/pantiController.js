@@ -2,6 +2,7 @@ const pool = require('../config/db');
 const asyncHandler = require('../utils/asyncHandler');
 const { sendSuccess } = require('../utils/response');
 const { uploadBufferToStorage } = require('../utils/storage');
+const { logStorageUpload } = require('../utils/firestore');
 
 const getAll = asyncHandler(async (req, res) => {
   const result = await pool.query('SELECT * FROM panti ORDER BY created_at DESC');
@@ -23,9 +24,10 @@ const createOne = asyncHandler(async (req, res) => {
   }
 
   let foto_panti_url = null;
+  let uploadedFoto = null;
   if (req.file) {
-    const uploaded = await uploadBufferToStorage(req.file, 'foto-panti');
-    foto_panti_url = uploaded?.url || null;
+    uploadedFoto = await uploadBufferToStorage(req.file, 'foto-panti');
+    foto_panti_url = uploadedFoto?.url || null;
   }
 
   const result = await pool.query(
@@ -34,6 +36,23 @@ const createOne = asyncHandler(async (req, res) => {
      RETURNING *`,
     [nama_panti, alamat || null, no_telepon || null, email_panti || null, foto_panti_url, deskripsi || null]
   );
+
+  if (uploadedFoto) {
+    await logStorageUpload({
+      table_name: 'panti',
+      record_id: result.rows[0].id,
+      entity_type: 'panti',
+      field_name: 'foto_panti_url',
+      folder: uploadedFoto.folder,
+      bucket_name: uploadedFoto.bucketName,
+      object_path: uploadedFoto.path,
+      url: uploadedFoto.url,
+      original_name: uploadedFoto.originalName,
+      file_name: uploadedFoto.fileName,
+      mime_type: uploadedFoto.mimeType,
+      file_size: uploadedFoto.size
+    });
+  }
 
   return sendSuccess(res, 'Panti berhasil ditambahkan.', result.rows[0], 201);
 });

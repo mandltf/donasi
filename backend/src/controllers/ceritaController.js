@@ -2,7 +2,7 @@ const pool = require('../config/db');
 const asyncHandler = require('../utils/asyncHandler');
 const { sendSuccess } = require('../utils/response');
 const { uploadBufferToStorage } = require('../utils/storage');
-const { logCeritaAktivitas } = require('../utils/firestore');
+const { logCeritaAktivitas, logStorageUpload } = require('../utils/firestore');
 
 function extractCeritaFiles(req) {
   if (Array.isArray(req.files) && req.files.length > 0) {
@@ -21,7 +21,7 @@ async function uploadCeritaPhotos(files) {
   for (const file of files) {
     const result = await uploadBufferToStorage(file, 'cerita-aktivitas');
     if (result?.url) {
-      uploaded.push(result.url);
+      uploaded.push(result);
     }
   }
   return uploaded;
@@ -62,8 +62,8 @@ const createOne = asyncHandler(async (req, res) => {
 
   const uploadedFiles = extractCeritaFiles(req);
   const fotoUrls = await uploadCeritaPhotos(uploadedFiles);
-  const fotoUrl = fotoUrls[0] || null;
-  const fotoUrlsJson = fotoUrls.length > 0 ? JSON.stringify(fotoUrls) : null;
+  const fotoUrl = fotoUrls[0]?.url || null;
+  const fotoUrlsJson = fotoUrls.length > 0 ? JSON.stringify(fotoUrls.map((item) => item.url)) : null;
 
   const result = await pool.query(
     `INSERT INTO cerita_aktivitas (id_panti, judul, konten, foto_url, foto_urls)
@@ -81,6 +81,21 @@ const createOne = asyncHandler(async (req, res) => {
     aksi: 'create'
   });
 
+  await Promise.allSettled(fotoUrls.map((fileInfo) => logStorageUpload({
+    table_name: 'cerita_aktivitas',
+    record_id: result.rows[0].id,
+    entity_type: 'cerita_aktivitas',
+    field_name: 'foto_urls',
+    folder: fileInfo.folder,
+    bucket_name: fileInfo.bucketName,
+    object_path: fileInfo.path,
+    url: fileInfo.url,
+    original_name: fileInfo.originalName,
+    file_name: fileInfo.fileName,
+    mime_type: fileInfo.mimeType,
+    file_size: fileInfo.size
+  })));
+
   return sendSuccess(res, 'Cerita berhasil dibuat.', result.rows[0], 201);
 });
 
@@ -88,8 +103,8 @@ const updateOne = asyncHandler(async (req, res) => {
   const { id_panti, judul, konten } = req.body;
   const uploadedFiles = extractCeritaFiles(req);
   const fotoUrls = await uploadCeritaPhotos(uploadedFiles);
-  const fotoUrl = fotoUrls[0] || null;
-  const fotoUrlsJson = fotoUrls.length > 0 ? JSON.stringify(fotoUrls) : null;
+  const fotoUrl = fotoUrls[0]?.url || null;
+  const fotoUrlsJson = fotoUrls.length > 0 ? JSON.stringify(fotoUrls.map((item) => item.url)) : null;
 
   const result = await pool.query(
     `UPDATE cerita_aktivitas
@@ -115,6 +130,21 @@ const updateOne = asyncHandler(async (req, res) => {
     foto_url: result.rows[0].foto_url,
     aksi: 'update'
   });
+
+  await Promise.allSettled(fotoUrls.map((fileInfo) => logStorageUpload({
+    table_name: 'cerita_aktivitas',
+    record_id: result.rows[0].id,
+    entity_type: 'cerita_aktivitas',
+    field_name: 'foto_urls',
+    folder: fileInfo.folder,
+    bucket_name: fileInfo.bucketName,
+    object_path: fileInfo.path,
+    url: fileInfo.url,
+    original_name: fileInfo.originalName,
+    file_name: fileInfo.fileName,
+    mime_type: fileInfo.mimeType,
+    file_size: fileInfo.size
+  })));
 
   return sendSuccess(res, 'Cerita berhasil diperbarui.', result.rows[0]);
 });

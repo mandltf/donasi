@@ -13,6 +13,7 @@ const env = {
   jwtSecret: process.env.JWT_SECRET || 'dev_secret_change_me',
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
   gcpProjectId: process.env.GCP_PROJECT_ID || '',
+  firebaseStorageBucket: process.env.FIREBASE_STORAGE_BUCKET || process.env.GCS_BUCKET_NAME || '',
   gcsBucketName: process.env.GCS_BUCKET_NAME || '',
   corsOrigin: process.env.CORS_ORIGIN || '*',
   firebaseDatabaseUrl: process.env.FIREBASE_DATABASE_URL || ''

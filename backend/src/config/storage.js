@@ -1,28 +1,29 @@
-const { Storage } = require('@google-cloud/storage');
+const { admin, firebaseEnabled } = require('./firebaseAdmin');
 const env = require('./env');
 
-let storage = null;
 let bucket = null;
 let storageEnabled = false;
 
 try {
-  if (!env.gcsBucketName) {
-    throw new Error('GCS bucket name not configured');
+  if (!firebaseEnabled || !admin) {
+    throw new Error('Firebase admin not initialized');
   }
 
-  storage = new Storage({ projectId: env.gcpProjectId || undefined });
-  bucket = storage.bucket(env.gcsBucketName);
+  const bucketName = env.firebaseStorageBucket || env.gcsBucketName;
+  bucket = bucketName ? admin.storage().bucket(bucketName) : admin.storage().bucket();
+  if (!bucket) {
+    throw new Error('Firebase Storage bucket not configured');
+  }
+
   storageEnabled = true;
-  console.log('GCS storage initialized for bucket:', env.gcsBucketName);
+  console.log('Firebase Storage initialized for bucket:', bucket.name);
 } catch (err) {
-  console.warn('GCS storage not initialized, uploads will be disabled:', err.message || err);
-  storage = null;
+  console.warn('Firebase Storage not initialized, uploads will be disabled:', err.message || err);
   bucket = null;
   storageEnabled = false;
 }
 
 module.exports = {
-  storage,
   bucket,
   storageEnabled
 };

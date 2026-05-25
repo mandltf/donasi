@@ -65,6 +65,14 @@ async function logCeritaAktivitas(entry) {
   }));
 }
 
+async function logStorageUpload(entry) {
+  if (!ensureEnabled()) return null;
+  return safeFirestoreWrite(() => firestore.collection('storage_uploads').add({
+    ...entry,
+    created_at: fieldValue.serverTimestamp()
+  }));
+}
+
 async function listCollection(collectionName, orderByField = 'created_at') {
   if (!ensureEnabled()) return [];
   try {
@@ -98,6 +106,7 @@ module.exports = {
   logTransparansiTimeline,
   logBuktiFoto,
   logCeritaAktivitas,
+  logStorageUpload,
   listCollection,
   listNotificationsByDonatur
 };

@@ -6,5 +6,5 @@ const { storageEnabled } = require('./config/storage');
 app.listen(env.port, () => {
   console.log(`Backend berjalan di port ${env.port}`);
   if (!firebaseEnabled) console.warn('Firestore disabled: realtime features and notifications will be no-op.');
-  if (!storageEnabled) console.warn('GCS disabled: file uploads will be skipped.');
+  if (!storageEnabled) console.warn('Firebase Storage disabled: file uploads will be skipped.');
 });

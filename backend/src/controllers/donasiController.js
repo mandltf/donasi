@@ -2,7 +2,7 @@ const pool = require('../config/db');
 const asyncHandler = require('../utils/asyncHandler');
 const { sendSuccess } = require('../utils/response');
 const { uploadBufferToStorage } = require('../utils/storage');
-const { logDonationNotification, logTransparansiTimeline, syncKebutuhanRealtime } = require('../utils/firestore');
+const { logDonationNotification, logTransparansiTimeline, syncKebutuhanRealtime, logStorageUpload } = require('../utils/firestore');
 
 const createOne = asyncHandler(async (req, res) => {
   const idDonatur = req.user.idDonatur;
@@ -59,9 +59,10 @@ const createOne = asyncHandler(async (req, res) => {
     const nominal = Number(kebutuhan.harga_satuan) * jumlahDonasi;
 
     let buktiTransferUrl = null;
+    let uploadedBuktiTransfer = null;
     if (req.file) {
-      const uploaded = await uploadBufferToStorage(req.file, 'bukti-transfer');
-      buktiTransferUrl = uploaded?.url || null;
+      uploadedBuktiTransfer = await uploadBufferToStorage(req.file, 'bukti-transfer');
+      buktiTransferUrl = uploadedBuktiTransfer?.url || null;
     }
 
     const result = await client.query(
@@ -72,6 +73,24 @@ const createOne = asyncHandler(async (req, res) => {
     );
 
     await client.query('COMMIT');
+
+    if (uploadedBuktiTransfer) {
+      await logStorageUpload({
+        table_name: 'donasi',
+        record_id: result.rows[0].id,
+        entity_type: 'donasi',
+        field_name: 'bukti_transfer_url',
+        folder: uploadedBuktiTransfer.folder,
+        bucket_name: uploadedBuktiTransfer.bucketName,
+        object_path: uploadedBuktiTransfer.path,
+        url: uploadedBuktiTransfer.url,
+        original_name: uploadedBuktiTransfer.originalName,
+        file_name: uploadedBuktiTransfer.fileName,
+        mime_type: uploadedBuktiTransfer.mimeType,
+        file_size: uploadedBuktiTransfer.size,
+        uploaded_by: idDonatur
+      });
+    }
 
     return sendSuccess(res, 'Donasi berhasil dibuat dan menunggu verifikasi.', result.rows[0], 201);
   } catch (error) {

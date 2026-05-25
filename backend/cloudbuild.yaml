@@ -2,7 +2,7 @@ substitutions:
   _REGION: us-central1
   _BACKEND_SERVICE: donasi-panti-backend
   _REPO: donasi-panti
-  _GCS_BUCKET_NAME: projek-tcc-donasi-panti
+  _FIREBASE_STORAGE_BUCKET: b-12-497108.firebasestorage.app
 
 availableSecrets:
   secretManager:
@@ -56,7 +56,7 @@ steps:
           --region ${_REGION} \
           --platform managed \
           --allow-unauthenticated \
-          --set-env-vars "NODE_ENV=production,GCP_PROJECT_ID=${PROJECT_ID},GCS_BUCKET_NAME=${_GCS_BUCKET_NAME},DATABASE_URL=$$DATABASE_URL,CORS_ORIGIN=*"
+          --set-env-vars "NODE_ENV=production,GCP_PROJECT_ID=${PROJECT_ID},FIREBASE_STORAGE_BUCKET=${_FIREBASE_STORAGE_BUCKET},GCS_BUCKET_NAME=${_FIREBASE_STORAGE_BUCKET},DATABASE_URL=$$DATABASE_URL,CORS_ORIGIN=*"
 
 images:
   - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/${_BACKEND_SERVICE}:$SHORT_SHA

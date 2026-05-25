@@ -11,7 +11,7 @@ async function uploadBufferToStorage(file, folder) {
     return null;
   }
   if (!storageEnabled || !bucket) {
-    console.warn('Skipping upload because GCS is not configured.');
+    console.warn('Skipping upload because Firebase Storage is not configured.');
     return null;
   }
 
@@ -35,7 +35,12 @@ async function uploadBufferToStorage(file, folder) {
   return {
     path: objectName,
     url: signedUrl,
-    fileName: sanitizeFileName(file.originalname || 'file')
+    fileName: sanitizeFileName(file.originalname || 'file'),
+    originalName: file.originalname || 'file',
+    mimeType: file.mimetype || null,
+    size: file.size || null,
+    bucketName: bucket.name,
+    folder
   };
 }
 
@@ -48,6 +53,11 @@ function extractStorageObjectPath(storedUrl) {
     // Match: https://storage.googleapis.com/{bucket}/{object}[?query]
     const m = storedUrl.match(/^https:\/\/storage\.googleapis\.com\/[^\/]+\/(.+?)(?:\?|$)/);
     return m ? m[1] : null;
+  }
+
+  if (storedUrl.startsWith('https://firebasestorage.googleapis.com/')) {
+    const match = storedUrl.match(/^https:\/\/firebasestorage\.googleapis\.com\/v0\/b\/[^\/]+\/o\/(.+?)(?:\?|$)/);
+    return match ? decodeURIComponent(match[1]) : null;
   }
 
   if (storedUrl.startsWith('gs://')) {

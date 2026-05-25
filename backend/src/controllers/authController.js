@@ -4,6 +4,7 @@ const { sendSuccess } = require('../utils/response');
 const { hashPassword, comparePassword } = require('../utils/password');
 const { signToken } = require('../utils/jwt');
 const { uploadBufferToStorage } = require('../utils/storage');
+const { logStorageUpload } = require('../utils/firestore');
 
 function buildProfile(row) {
   if (!row) {
@@ -161,9 +162,10 @@ const updateProfile = asyncHandler(async (req, res) => {
   const { nama, no_hp, alamat } = req.body;
 
   let foto_profil_url = null;
+  let uploadedFoto = null;
   if (req.file) {
-    const uploaded = await uploadBufferToStorage(req.file, 'foto-profil');
-    foto_profil_url = uploaded?.url || null;
+    uploadedFoto = await uploadBufferToStorage(req.file, 'foto-profil');
+    foto_profil_url = uploadedFoto?.url || null;
   }
 
   // Build dynamic update — only touch foto_profil_url if a new file was uploaded
@@ -184,6 +186,24 @@ const updateProfile = asyncHandler(async (req, res) => {
 
   if (result.rowCount === 0) {
     return res.status(404).json({ message: 'Donatur tidak ditemukan.' });
+  }
+
+  if (uploadedFoto) {
+    await logStorageUpload({
+      table_name: 'users',
+      record_id: userId,
+      entity_type: 'profil_donatur',
+      field_name: 'foto_profil_url',
+      folder: uploadedFoto.folder,
+      bucket_name: uploadedFoto.bucketName,
+      object_path: uploadedFoto.path,
+      url: uploadedFoto.url,
+      original_name: uploadedFoto.originalName,
+      file_name: uploadedFoto.fileName,
+      mime_type: uploadedFoto.mimeType,
+      file_size: uploadedFoto.size,
+      uploaded_by: userId
+    });
   }
 
   const updated = result.rows[0];

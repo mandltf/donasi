@@ -2,7 +2,7 @@ const pool = require('../config/db');
 const asyncHandler = require('../utils/asyncHandler');
 const { sendSuccess } = require('../utils/response');
 const { uploadBufferToStorage } = require('../utils/storage');
-const { logBuktiFoto, logTransparansiTimeline } = require('../utils/firestore');
+const { logBuktiFoto, logTransparansiTimeline, logStorageUpload } = require('../utils/firestore');
 
 const createOne = asyncHandler(async (req, res) => {
   const { id_kebutuhan, id_panti, jumlah_disalurkan, tanggal_salur, deskripsi_penggunaan, status_penyaluran } = req.body;
@@ -62,6 +62,22 @@ const createOne = asyncHandler(async (req, res) => {
               'UPDATE penyaluran_dana SET bukti_url = $1 WHERE id = $2',
               [buktiUrl, penyaluran.id]
             )));
+
+            await Promise.allSettled(createdPenyalurans.map((penyaluran) => logStorageUpload({
+              table_name: 'penyaluran_dana',
+              record_id: penyaluran.id,
+              entity_type: 'bukti_penyaluran',
+              field_name: 'bukti_url',
+              folder: uploaded.folder,
+              bucket_name: uploaded.bucketName,
+              object_path: uploaded.path,
+              url: uploaded.url,
+              original_name: uploaded.originalName,
+              file_name: uploaded.fileName,
+              mime_type: uploaded.mimeType,
+              file_size: uploaded.size,
+              uploaded_by: req.user?.userId || null
+            })));
           }
         }
 
@@ -152,6 +168,22 @@ const attachBukti = asyncHandler(async (req, res) => {
       [buktiUrl, Number(id_penyaluran)]
     );
   }
+
+  await logStorageUpload({
+    table_name: 'penyaluran_dana',
+    record_id: Number(id_penyaluran),
+    entity_type: 'bukti_penyaluran',
+    field_name: 'bukti_url',
+    folder: uploaded.folder,
+    bucket_name: uploaded.bucketName,
+    object_path: uploaded.path,
+    url: uploaded.url,
+    original_name: uploaded.originalName,
+    file_name: uploaded.fileName,
+    mime_type: uploaded.mimeType,
+    file_size: uploaded.size,
+    uploaded_by: req.user?.userId || null
+  });
 
   await logBuktiFoto({
     id_penyaluran: Number(id_penyaluran),

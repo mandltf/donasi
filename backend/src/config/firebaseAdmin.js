@@ -12,7 +12,7 @@ try {
     const initConfig = {};
     if (env.gcpProjectId) initConfig.projectId = env.gcpProjectId;
     if (env.firebaseDatabaseUrl) initConfig.databaseURL = env.firebaseDatabaseUrl;
-    if (env.gcsBucketName) initConfig.storageBucket = env.gcsBucketName;
+    if (env.firebaseStorageBucket) initConfig.storageBucket = env.firebaseStorageBucket;
 
     admin.initializeApp({
       credential: admin.credential.applicationDefault(),
